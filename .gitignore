@@ -1,0 +1,7 @@
+*.msixbundle
+*.msi
+*.exe
+*.intunewin
+*.mst
+*.cab
+*.bak
