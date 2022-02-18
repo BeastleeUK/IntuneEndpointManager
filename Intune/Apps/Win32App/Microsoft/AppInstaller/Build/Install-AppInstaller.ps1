@@ -3,8 +3,6 @@ $DebugPreference = "Continue"
 
 ## Script Variables
 $scriptPath = $MyInvocation.MyCommand.Definition
-$scriptName = [IO.Path]::GetFileNameWithoutExtension($scriptPath)
-$scriptFileName = Split-Path -Path $scriptPath -Leaf
 $scriptRoot = Split-Path -Path $scriptPath -Parent
 $scriptParentPath = (Get-Item -LiteralPath $scriptRoot).Parent.FullName
 
@@ -23,12 +21,26 @@ If (!(Test-Path -Path $logPath)){
 Start-Transcript -Path "$logPath\$logFile"
 
 try{
-    $ExtractPath = $(Get-Location)
     Write-Verbose "Starting detection for App Installer"
-    $appFilePath = $env:ProgramFiles + "\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe\AppInstallerCLI.exe"
-    If (!(Test-Path -Path $appFilePath)){
+    $WindowsAppsPath = $env:ProgramFiles + "\WindowsApps"
+    $AppInstallerFolders = (Get-ChildItem -Path $WindowsAppsPath | Where-Object { $_.Name -like "Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" } | Select-Object Name)
+    $AppInstallerFound = $false
+    If ( $AppInstallerFolders) {
+        ForEach ($FolderName in $AppInstallerFolders) {
+            $appFilePath = (Join-Path -path $WindowsAppsPath -ChildPath $FolderName.Name | Join-Path -ChildPath "AppInstallerCLI.exe")
+            Write-Verbose "Checking for application at $appFilePath"
+            If (Test-Path -Path $appFilePath) {
+                $AppInstallerFound = $true
+                Write-Verbose "File Found"
+            }else{
+                Write-Verbose "File not Found"
+            }
+
+        }
+    }
+    If (!($AppInstallerFound)) {
         Write-Verbose "App Installer not Installed, installing package"
-        $PackagePath = Get-ChildItem -Path $ExtractPath -Include "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -File -Recurse -ErrorAction SilentlyContinue
+        $PackagePath = Get-ChildItem -Path $dirFiles -Include "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -File -Recurse -ErrorAction SilentlyContinue
         Add-AppPackage -path $PackagePath
     }else{
         Write-Verbose "App Installer is already present. Nothing to do"
