@@ -3,9 +3,6 @@
 $VerbosePreference = "Continue"
 $DebugPreference = "Continue"
 
-## Files location
-$dirFiles = Join-Path -Path $PSScriptRoot -ChildPath 'Files'
-
 ## Log Variables
 $logPath = $(Join-Path -Path $env:windir -Childpath "Logs\Intune\WingetInstalls")
 $logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - Install-AppInstaller.log"
@@ -26,9 +23,9 @@ try{
     Push-Location -StackName WorkingDir
     Push-Location "$env:ProgramFiles\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" -ErrorAction SilentlyContinue
     IF( $(Get-Location).Path -eq $WorkingDir){
-        Write-Verbose "$appID Not Installed - Starting Download"
+        Write-Verbose "App Installer Not Installed - Starting Download"
         Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
-        Write-Verbose -Verbose "Installing msixbundle for $appID"
+        Write-Verbose -Verbose "Installing msixbundle for App Installer"
         DISM.EXE /Online /Add-ProvisionedAppxPackage /PackagePath:$bundlePath /SkipLicense
         exit 0
     }Else{
