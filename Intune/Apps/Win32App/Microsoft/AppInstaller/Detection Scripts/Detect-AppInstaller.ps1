@@ -5,7 +5,7 @@ $DebugPreference = "Continue"
 
 ## Log Variables
 $logPath = $(Join-Path -Path $env:windir -Childpath "Logs\Intune\WingetInstalls")
-$logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - Install-AppInstaller.log"
+$logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - Detect-AppInstaller.log"
 $errorVar = $null
 
 $settingsFilePath = $(Join-Path $env:ProgramData -ChildPath "Intune\settings.json")
