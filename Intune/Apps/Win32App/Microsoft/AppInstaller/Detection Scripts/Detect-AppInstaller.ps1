@@ -25,9 +25,6 @@ IF ($debug) {
 }
 
 try{
-    $wingetURL = "https://aka.ms/getwinget"
-    $bundlePath = "$PSScriptRoot\package.msixbundle"
-
     Write-Verbose "Starting detection for App Installer"
     $WorkingDir = $(Get-Location).Path
     Push-Location -StackName WorkingDir
