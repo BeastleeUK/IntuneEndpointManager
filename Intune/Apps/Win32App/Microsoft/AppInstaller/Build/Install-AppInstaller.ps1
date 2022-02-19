@@ -23,7 +23,7 @@ Start-Transcript -Path "$logPath\$logFile"
 try{
     Write-Verbose "Starting detection for App Installer"
     $WindowsAppsPath = $env:ProgramFiles + "\WindowsApps"
-    $AppInstallerFolders = (Get-ChildItem -Path $WindowsAppsPath | Where-Object { $_.Name -like "Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" } | Select-Object Name)
+    $AppInstallerFolders = (Get-ChildItem -Path "C:\Program Files\WindowsApps" | Where-Object { $_.Name -like "Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" } | Select-Object Name)
     $AppInstallerFound = $false
     If ( $AppInstallerFolders) {
         ForEach ($FolderName in $AppInstallerFolders) {
@@ -58,7 +58,7 @@ Finally {
         Write-Verbose "Script Completed"
     }   
 
-    If ($debug) {Stop-Transcript}
+    Stop-Transcript
     $VerbosePreference = "SilentlyContinue"
     $DebugPreference = "SilentlyContinue"
 
