@@ -1,13 +1,10 @@
+##Credit to CodyRWhite (https://github.com/CodyRWhite) for the orignal code and idea
+
 $VerbosePreference = "Continue"
 $DebugPreference = "Continue"
 
-## Script Variables
-$scriptPath = $MyInvocation.MyCommand.Definition
-$scriptRoot = Split-Path -Path $scriptPath -Parent
-$scriptParentPath = (Get-Item -LiteralPath $scriptRoot).Parent.FullName
-
 ## Files location
-$dirFiles = Join-Path -Path $scriptParentPath -ChildPath 'Files'
+$dirFiles = Join-Path -Path $PSScriptRoot -ChildPath 'Files'
 
 ## Log Variables
 $logPath = $(Join-Path -Path $env:windir -Childpath "Logs\Intune\WingetInstalls")
@@ -21,30 +18,38 @@ If (!(Test-Path -Path $logPath)){
 Start-Transcript -Path "$logPath\$logFile"
 
 try{
-    Write-Verbose "Starting detection for App Installer"
-    $WindowsAppsPath = $env:ProgramFiles + "\WindowsApps"
-    $AppInstallerFolders = (Get-ChildItem -Path "C:\Program Files\WindowsApps" | Where-Object { $_.Name -like "Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" } | Select-Object Name)
-    $AppInstallerFound = $false
-    If ( $AppInstallerFolders) {
-        ForEach ($FolderName in $AppInstallerFolders) {
-            $appFilePath = (Join-Path -path $WindowsAppsPath -ChildPath $FolderName.Name | Join-Path -ChildPath "AppInstallerCLI.exe")
-            Write-Verbose "Checking for application at $appFilePath"
-            If (Test-Path -Path $appFilePath) {
-                $AppInstallerFound = $true
-                Write-Verbose "File Found"
-            }else{
-                Write-Verbose "File not Found"
-            }
+    $wingetURL = "https://aka.ms/getwinget"
+    $bundlePath = "$PSScriptRoot\package.msixbundle"
 
+    Write-Verbose "Starting detection for App Installer"
+    $WorkingDir = $(Get-Location).Path
+    Push-Location -StackName WorkingDir
+    Push-Location "$env:ProgramFiles\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" -ErrorAction SilentlyContinue
+    IF( $(Get-Location).Path -eq $WorkingDir){
+        Write-Verbose "$appID Not Installed - Starting Download"
+        Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
+        Write-Verbose -Verbose "Installing msixbundle for $appID"
+        DISM.EXE /Online /Add-ProvisionedAppxPackage /PackagePath:$bundlePath /SkipLicense
+        exit 0
+    }Else{
+        $installedVersionFolder = Split-Path -Path (Get-Location) -Leaf
+        $appFilePath = "$(Get-Location)\AppInstallerCLI.exe"
+        Pop-Location -StackName WorkingDir
+
+        IF (!(Test-Path -Path $appFilePath)){            
+            Write-Verbose -Verbose "AppInstallerCLI.exe does not exist, uninstalling current version"
+            Remove-AppPackage -Package $installedVersionFolder
+
+            Write-Verbose -Verbose "$appID not installed, starting download"
+            Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
+
+            Write-Verbose -Verbose "Installing msixbundle for $appID"
+            DISM.EXE /Online /Add-ProvisionedAppxPackage /PackagePath:$bundlePath /SkipLicense
+            exit 0
+        }else{
+            Write-Verbose -Verbose "$appID already Installed"
+            Exit 0
         }
-    }
-    If (!($AppInstallerFound)) {
-        Write-Verbose "App Installer not Installed, installing package"
-        $PackagePath = Get-ChildItem -Path $dirFiles -Include "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -File -Recurse -ErrorAction SilentlyContinue
-        Add-AppPackage -path $PackagePath
-    }else{
-        Write-Verbose "App Installer is already present. Nothing to do"
-        Exit 0
     }
 }
 Catch {
