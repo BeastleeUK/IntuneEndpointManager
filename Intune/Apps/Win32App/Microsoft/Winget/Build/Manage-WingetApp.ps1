@@ -1,5 +1,7 @@
 ##Credit to CodyRWhite (https://github.com/CodyRWhite) for the orignal code and idea
 param (
+    [Parameter(ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    [string]$action = "install",
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     [string]$appID,
     [Parameter(ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
@@ -30,12 +32,26 @@ IF (!(Test-Path -Path $logPath)){
 IF ($debug) {Start-Transcript -Path "$logPath\$logFile"}
 
 try{
-    Write-Verbose "Starting install for $appID"
+    Write-Verbose "Starting $action of $appID"
     Push-Location "C:\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe"
     $appFilePath = "$(Get-Location)\AppInstallerCLI.exe"
-    IF (Test-Path -Path $appFilePath){
-        $argumentList =  [System.Collections.ArrayList]@("install", "--silent", "--accept-package-agreements", "--accept-source-agreements", "--source $source", "--scope $scope", "--exact `"$appID`"")
-        If ($override) { $argumentList.Add("--override `"$override`"") }
+    If (Test-Path -Path $appFilePath){
+        switch ($action) {
+
+            "install" {
+                $argumentList =  [System.Collections.ArrayList]@("install", "--silent", "--accept-package-agreements", "--accept-source-agreements", "--source $source", "--scope $scope", "--exact `"$appID`"")
+                If ($override) { $argumentList.Add("--override `"$override`"") }       
+            }
+
+            {"uninstall","remove"} {
+                $argumentList =  [System.Collections.ArrayList]@("uninstall", "--silent", "--exact `"$appID`"")
+            }
+
+            default {
+                Write-Verbose "No valid action specified. Exiting."
+                Exit 1
+            }
+        }
         $cliCommand = '& $appFilePath ' + $argumentList
         $installResult =  Invoke-Expression $cliCommand | Out-String
         Write-Verbose $installResult
