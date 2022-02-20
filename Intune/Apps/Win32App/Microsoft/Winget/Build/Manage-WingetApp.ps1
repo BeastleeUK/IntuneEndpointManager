@@ -21,7 +21,7 @@ $logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - $ap
 $errorVar = $null
 $installResult = $null
 
-$settingsFilePath = $(Join-Path $env:ProgramData -ChildPath "Intune\settings.json")
+$settingsFilePath = $(Join-Path -Path $env:ProgramData -ChildPath "Intune\settings.json")
 $intuneSettings = Get-Content -Raw -Path $settingsFilePath | ConvertFrom-Json
 $debug = [bool]$intuneSettings.Settings.InstallDebug
 
