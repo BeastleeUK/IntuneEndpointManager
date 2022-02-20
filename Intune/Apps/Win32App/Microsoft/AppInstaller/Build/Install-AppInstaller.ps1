@@ -1,18 +1,37 @@
-##Credit to CodyRWhite (https://github.com/CodyRWhite) for the orignal code and idea
+<#
+.SYNOPSIS
+	Installs the Microsoft App Installer Package, a pre-requisite for winget based package deployments.
+.DESCRIPTION
+	Installs the Microsoft App Installer Package, a pre-requisite for winget based package deployments.
+.NOTES
+	Credit to CodyRWhite (https://github.com/CodyRWhite) for the orignal code
+.LINK
+	BeastleeUK Github Repository https://github.com/BeastleeUK/IntuneEndpointManager
+.LINK
+    Microsoft Winget Documentation https://docs.microsoft.com/en-us/windows/package-manager/winget/
+#>
 
 $VerbosePreference = "Continue"
 $DebugPreference = "Continue"
 
-## Log Variables
 $logPath = $(Join-Path -Path $env:windir -Childpath "Logs\Intune\WingetInstalls")
-$logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - Install-AppInstaller.log"
+$logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - $appID.log"
 $errorVar = $null
 
-If (!(Test-Path -Path $logPath)){
-    New-Item -Path $logPath -ItemType Directory -Force
+$settingsFilePath = $(Join-Path -Path $env:ProgramData -ChildPath "Intune\settings.json")
+If (Test-Path -Path $settingsFilePath) {
+    $intuneSettings = Get-Content -Raw -Path $settingsFilePath | ConvertFrom-Json
+    $debug = [bool]$intuneSettings.Settings.InstallDebug
+}else{
+    $debug = $false
 }
 
-Start-Transcript -Path "$logPath\$logFile"
+If ($debug) {
+    IF (!(Test-Path -Path $logPath)){
+        New-Item -Path $logPath -ItemType Directory -Force
+    }
+    Start-Transcript -Path "$logPath\$logFile"
+}
 
 try{
     $wingetURL = "https://aka.ms/getwinget"
@@ -67,7 +86,7 @@ Finally {
         Write-Verbose "Script Completed"
     }   
 
-    Stop-Transcript
+    If( $debug) { Stop-Transcript }
     $VerbosePreference = "SilentlyContinue"
     $DebugPreference = "SilentlyContinue"
 
