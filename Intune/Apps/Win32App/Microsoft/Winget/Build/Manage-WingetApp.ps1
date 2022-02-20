@@ -44,12 +44,13 @@ $VerbosePreference = "Continue"
 $DebugPreference = "Continue"
 
 
-$logPath = $(Join-Path -Path $env:windir -Childpath "Logs\Intune\WingetInstalls")
+$logPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging\InstallLogs"
+$logSettingsPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging"
+$settingsFilePath = "$logSettingsPath\settings.json"
 $logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - $appID.log"
 $errorVar = $null
 $installResult = $null
 
-$settingsFilePath = $(Join-Path -Path $env:ProgramData -ChildPath "Intune\settings.json")
 If (Test-Path -Path $settingsFilePath) {
     $intuneSettings = Get-Content -Raw -Path $settingsFilePath | ConvertFrom-Json
     $debug = [bool]$intuneSettings.Settings.InstallDebug
