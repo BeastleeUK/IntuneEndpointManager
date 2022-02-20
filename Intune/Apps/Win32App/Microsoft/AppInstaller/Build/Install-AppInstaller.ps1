@@ -21,7 +21,7 @@ try{
     Write-Verbose "Starting detection for App Installer"
     $WorkingDir = $(Get-Location).Path
     Push-Location -StackName WorkingDir
-    Push-Location "$env:ProgramFiles\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" -ErrorAction SilentlyContinue
+    Push-Location "$env:SystemDrive\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" -ErrorAction SilentlyContinue
     IF( $(Get-Location).Path -eq $WorkingDir){
         Write-Verbose "App Installer Not Installed - Starting Download"
         Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
@@ -37,16 +37,23 @@ try{
             Write-Verbose -Verbose "AppInstallerCLI.exe does not exist, uninstalling current version"
             Remove-AppPackage -Package $installedVersionFolder
 
-            Write-Verbose -Verbose "$appID not installed, starting download"
+            Write-Verbose -Verbose "App Installer not installed, starting download"
             Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
 
-            Write-Verbose -Verbose "Installing msixbundle for $appID"
+            Write-Verbose -Verbose "Installing msixbundle for App Installer"
             DISM.EXE /Online /Add-ProvisionedAppxPackage /PackagePath:$bundlePath /SkipLicense
             exit 0
         }else{
-            Write-Verbose -Verbose "$appID already Installed"
+            Write-Verbose -Verbose "App Installer already Installed"
             Exit 0
         }
+    }
+    Write-Verbose "Checking for settings file"
+    $settingsFolder = "$env:ProgramData\Intune"
+    $settingsFilePath = "$settingsFolder\Intune\settings.json"
+    If (!(Test-Path -Path $settingsFilePath)) {
+        New-Item -Path $settingsFolder -ItemType Directory -Force
+        Copy-Item -Path "$PSScriptRoot\intune_settings.json" -Destination "$settingsFilePath"
     }
 }
 Catch {
@@ -64,7 +71,5 @@ Finally {
     $VerbosePreference = "SilentlyContinue"
     $DebugPreference = "SilentlyContinue"
 
-    If ($errorVar){
-        throw $errorVar 
-    }
+    Pop-Location -StackName WorkingDir
 }
