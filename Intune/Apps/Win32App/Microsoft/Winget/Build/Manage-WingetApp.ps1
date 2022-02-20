@@ -33,7 +33,7 @@ IF ($debug) {Start-Transcript -Path "$logPath\$logFile"}
 
 try{
     Write-Verbose "Starting $action of $appID"
-    Push-Location $(Join-Path $env:ProgramFiles -ChildPath "\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe")
+    Push-Location "$env:SystemDrive\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe"
     $appFilePath = "$(Get-Location)\AppInstallerCLI.exe"
     If (Test-Path -Path $appFilePath){
         switch ($action) {
