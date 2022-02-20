@@ -14,11 +14,12 @@
 $VerbosePreference = "Continue"
 $DebugPreference = "Continue"
 
-$logPath = $(Join-Path -Path $env:windir -Childpath "Logs\Intune\WingetInstalls")
+$logPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging\InstallLogs"
+$logSettingsPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging"
+$settingsFilePath = "$logSettingsPath\settings.json"
 $logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - $appID.log"
 $errorVar = $null
 
-$settingsFilePath = $(Join-Path -Path $env:ProgramData -ChildPath "Intune\settings.json")
 If (Test-Path -Path $settingsFilePath) {
     $intuneSettings = Get-Content -Raw -Path $settingsFilePath | ConvertFrom-Json
     $debug = [bool]$intuneSettings.Settings.InstallDebug
@@ -46,6 +47,7 @@ try{
         Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
         Write-Verbose -Verbose "Installing msixbundle for App Installer"
         DISM.EXE /Online /Add-ProvisionedAppxPackage /PackagePath:$bundlePath /SkipLicense
+        Pop-Location -StackName WorkingDir
         exit 0
     }Else{
         $installedVersionFolder = Split-Path -Path (Get-Location) -Leaf
@@ -82,6 +84,7 @@ Finally {
     If ($errorVar){
         Write-Verbose "Script Errored"
         Write-Error  $errorVar
+        Pop-Location -StackName WorkingDir
     }else{
         Write-Verbose "Script Completed"
     }   
@@ -90,5 +93,5 @@ Finally {
     $VerbosePreference = "SilentlyContinue"
     $DebugPreference = "SilentlyContinue"
 
-    Pop-Location -StackName WorkingDir
+
 }
