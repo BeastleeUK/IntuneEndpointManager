@@ -17,7 +17,7 @@ $DebugPreference = "Continue"
 $logPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging\InstallLogs"
 $logSettingsPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging"
 $settingsFilePath = "$logSettingsPath\settings.json"
-$logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - $appID.log"
+$logFile = "$($(Get-Date -Format "yyyy-MM-dd HH.mm.ssK").Replace(":","."))-Install-AppInstaller.log"
 $errorVar = $null
 
 If (Test-Path -Path $settingsFilePath) {
@@ -51,23 +51,29 @@ try{
         exit 0
     }Else{
         $installedVersionFolder = Split-Path -Path (Get-Location) -Leaf
-        $appFilePath = "$(Get-Location)\AppInstallerCLI.exe"
-        Pop-Location -StackName WorkingDir
+        $appFilePath = "$(Get-Location)\winget.exe"
+    
+        IF (!(Test-Path -Path $appFilePath)){
 
-        IF (!(Test-Path -Path $appFilePath)){            
-            Write-Verbose -Verbose "AppInstallerCLI.exe does not exist, uninstalling current version"
-            Remove-AppPackage -Package $installedVersionFolder
+            Write-Verbose -Verbose "$appFilePath does not exist, trying winget.exe"
+            $appFilePath = "$(Get-Location)\AppInstallerCLI.exe"
+            IF (!(Test-Path -Path $appFilePath)){    
+        
+                Write-Verbose -Verbose "winget.exe and AppInstallerCLI.exe do not exist, uninstalling current version"
+                Remove-AppPackage -Package $installedVersionFolder
 
-            Write-Verbose -Verbose "App Installer not installed, starting download"
-            Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
+                Write-Verbose -Verbose "App Installer not installed, starting download"
+                Invoke-WebRequest $wingetURL -UseBasicParsing -OutFile $bundlePath
 
-            Write-Verbose -Verbose "Installing msixbundle for App Installer"
-            DISM.EXE /Online /Add-ProvisionedAppxPackage /PackagePath:$bundlePath /SkipLicense
-            exit 0
+                Write-Verbose -Verbose "Installing msixbundle for App Installer"
+                DISM.EXE /Online /Add-ProvisionedAppxPackage /PackagePath:$bundlePath /SkipLicense
+                exit 0
+            }
         }else{
             Write-Verbose -Verbose "App Installer already Installed"
             Exit 0
         }
+        Pop-Location -StackName WorkingDir
     }
     Write-Verbose "Checking for settings file"
     $settingsFolder = "$env:ProgramData\Intune"

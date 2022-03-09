@@ -47,7 +47,7 @@ $DebugPreference = "Continue"
 $logPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging\InstallLogs"
 $logSettingsPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging"
 $settingsFilePath = "$logSettingsPath\settings.json"
-$logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - $appID.log"
+$logFile = "$($(Get-Date -Format "yyyy-MM-dd HH.mm.ssK").Replace(":","."))-$action-$appID.log"
 $errorVar = $null
 $installResult = $null
 
@@ -58,7 +58,6 @@ If (Test-Path -Path $settingsFilePath) {
     $debug = $false
 }
 
-
 If ($debug) {
     IF (!(Test-Path -Path $logPath)){
         New-Item -Path $logPath -ItemType Directory -Force
@@ -67,10 +66,31 @@ If ($debug) {
 }
 
 try{
-    Write-Verbose "Starting $action of $appID"
-    Push-Location "$env:SystemDrive\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe"
-    $appFilePath = "$(Get-Location)\AppInstallerCLI.exe"
-    If (Test-Path -Path $appFilePath){
+    $installerFound = $false
+    Write-Verbose "Detecting App Installer or Winget"
+    If ($scope -eq "user") {
+        $oldPreference = $ErrorActionPreference
+        $ErrorActionPreference = "SilentlyContinue"
+        If ($(Winget).length -gt 0) {
+            $appFilePath = "winget"
+            $installerFound = $true
+        }
+        $ErrorActionPreference = $oldPreference
+    }else{
+        Push-Location "$env:SystemDrive\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe" -ErrorAction SilentlyContinue
+        $appFilePath = "$(Get-Location)\winget.exe"
+        If (Test-Path $appFilePath) {
+            Write-Verbose "winget.exe found"
+            $installerFound = $true
+        }else{
+            $appFilePath = "$(Get-Location)\AppInstallerCLI.exe"
+            If (Test-Path $appFilePath) {
+                Write-Verbose "AppInstallerCLI.exe found"
+                $installerFound = $true
+            }
+        }
+    }
+    If ($installerFound) {
         switch ($action) {
 
             "install" {
@@ -87,6 +107,7 @@ try{
                 Exit 1
             }
         }
+        Write-Verbose "Starting $action of $appID"
         $cliCommand = '& $appFilePath ' + $argumentList
         $installResult =  Invoke-Expression $cliCommand | Out-String
         Write-Verbose $installResult

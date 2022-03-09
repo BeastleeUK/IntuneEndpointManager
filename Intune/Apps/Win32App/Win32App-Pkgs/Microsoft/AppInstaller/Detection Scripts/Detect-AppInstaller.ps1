@@ -17,7 +17,7 @@ $DebugPreference = "Continue"
 $logPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging\InstallLogs"
 $logSettingsPath = "$env:ProgramData\Microsoft\IntuneManagementExtension\CustomLogging"
 $settingsFilePath = "$logSettingsPath\settings.json"
-$logFile = "$($(Get-Date -Format "yyyy-MM-dd hh.mm.ssK").Replace(":",".")) - $appID.log"
+$logFile = "$($(Get-Date -Format "yyyy-MM-dd HH.mm.ssK").Replace(":","."))-Detect-AppInstaller.log"
 $errorVar = $null
 
 If (Test-Path -Path $settingsFilePath) {
@@ -41,17 +41,22 @@ try{
     If ( $AppInstallerFolders) {
         ForEach ($FolderName in $AppInstallerFolders) {
             $appFilePath = (Join-Path -path $WindowsAppsPath -ChildPath $FolderName.Name | Join-Path -ChildPath "AppInstallerCLI.exe")
-             If (Test-Path -Path $appFilePath) {
+            If (Test-Path -Path $appFilePath) {
                 $AppInstallerFound = $true
+            }else{
+                $appFilePath = (Join-Path -path $WindowsAppsPath -ChildPath $FolderName.Name | Join-Path -ChildPath "winget.exe")
+                If (Test-Path -Path $appFilePath) {
+                    $AppInstallerFound = $true
+                }
             }
         }
     }
     If ($AppInstallerFound) {
-        Write-Verbose "App Installer is already present. Nothing to do"
+        Write-Verbose "App Installer is already present. Nothing to do."
         Exit 0 
 
     }else{
-        Write-Verbose "App Installer not Installed, installing package"
+        Write-Verbose "App Installer not Installed."
         Exit 1
     }
 }
